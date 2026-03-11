@@ -9,7 +9,8 @@ Ideate a new lab for a given topic and write the plan to `instructors/lab-plan.m
 ## Steps
 
 1. Parse `$ARGUMENTS` to extract the topic (a short phrase describing the subject area, e.g. "REST API testing" or "container security"). If no topic is provided, ask the user.
-2. Read the lab creation conventions:
+2. Read the project configuration and lab creation conventions:
+   - [`contributing/configuration.md`](../../../contributing/configuration.md) — repository structure, artifact inventory, GitHub templates, VS Code config, agent config, and pre-publish checklist
    - [`contributing/conventions/writing/lab.md`](../../../contributing/conventions/writing/lab.md) — README structure, lab story, narrative, and checklist
    - [`contributing/conventions/writing/tasks.md`](../../../contributing/conventions/writing/tasks.md) — task structure and design principles
 3. Using the topic, design the lab:
