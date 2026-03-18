@@ -512,8 +512,8 @@ Complete these steps:
         User <user>
         IdentityFile ~/.ssh/se_toolkit_key
         AddKeysToAgent yes
-        PasswordAuthentication no
         UseKeychain yes
+        PasswordAuthentication no
      ```
 
 3. [Connect to the VM as the user `<user>` (LOCAL)](#connect-to-the-vm-as-the-user-user-local) to verify you can connect as the user `<user>` without a password.
