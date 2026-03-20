@@ -91,3 +91,84 @@ By the end of this lab, you should be able to say:
 2. [Backend Integration](./lab/tasks/required/task-2.md) — P0: slash commands + real data
 3. [Intent-Based Natural Language Routing](./lab/tasks/required/task-3.md) — P1: LLM tool use
 4. [Containerize and Document](./lab/tasks/required/task-4.md) — P3: containerize + deploy
+
+## Deploy
+
+After completing all tasks, deploy the bot to your VM using Docker Compose.
+
+### Prerequisites
+
+- VM with Docker installed
+- Backend running on VM (see [lab setup](./lab/setup/setup-simple.md#lab-setup))
+- Qwen Code API proxy running on VM (port 42005)
+- Telegram bot token from @BotFather
+
+### Environment Setup
+
+On your VM, edit `.env.docker.secret` and ensure these are set:
+
+```bash
+# Bot credentials
+BOT_TOKEN=your-telegram-bot-token-from-botfather
+LMS_API_KEY=your-lms-api-key
+LLM_API_KEY=your-qwen-api-key
+LLM_API_MODEL=coder-model
+```
+
+### Deploy Commands
+
+```bash
+# SSH to your VM
+ssh root@YOUR_VM_IP
+
+# Navigate to the project
+cd ~/se-toolkit-lab-7
+
+# Stop any running bot process (from Task 2-3)
+pkill -f "bot.py" 2>/dev/null
+
+# Build and start all services (including the bot)
+docker compose --env-file .env.docker.secret up --build -d
+
+# Verify all services are running
+docker compose --env-file .env.docker.secret ps
+```
+
+You should see the `bot` service running alongside `backend`, `postgres`, `caddy`, and `pgadmin`.
+
+### Verify Deployment
+
+```bash
+# Check bot logs
+docker compose --env-file .env.docker.secret logs bot --tail 20
+
+# Verify backend is still healthy
+curl -sf http://localhost:42002/docs
+```
+
+### Test in Telegram
+
+1. Open Telegram and find your bot (e.g., @your_bot_name)
+2. Send `/start` — should receive welcome message
+3. Send `/health` — should show backend status
+4. Send "what labs are available?" — should list labs from backend
+5. Send "show me scores for lab 4" — should show score data
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Bot container keeps restarting | Check logs: `docker compose logs bot` |
+| LLM queries fail | Ensure Qwen proxy is running: `curl http://localhost:42005/v1/models` |
+| Backend connection refused | Verify `LMS_API_URL=http://backend:8000` in compose file |
+| BOT_TOKEN error | Check `.env.docker.secret` has valid token |
+
+### Undeploy (if needed)
+
+```bash
+# Stop bot only
+docker compose --env-file .env.docker.secret stop bot
+
+# Stop everything
+docker compose --env-file .env.docker.secret down
+```
