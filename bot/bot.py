@@ -10,7 +10,7 @@ import argparse
 import sys
 from pathlib import Path
 
-# Add the bot directory to the path so we can import handlers
+# Add the bot directory to the path so we can import handlers and services
 bot_dir = Path(__file__).parent
 sys.path.insert(0, str(bot_dir))
 
