@@ -10,6 +10,7 @@ Usage:
 import httpx
 from typing import Any, Optional
 import json
+import sys
 
 
 class LLMClient:
@@ -42,7 +43,7 @@ class LLMClient:
         self,
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]],
-        max_iterations: int = 5,
+        max_iterations: int = 10,
     ) -> str:
         """
         Chat with the LLM using tool calling.
@@ -58,34 +59,48 @@ class LLMClient:
         client = await self._get_client()
 
         for iteration in range(max_iterations):
-            # Call the LLM
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                json={
-                    "model": self.model,
-                    "messages": messages,
-                    "tools": tools,
-                    "tool_choice": "auto",
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
+            try:
+                # Call the LLM
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "tools": tools,
+                        "tool_choice": "auto",
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            if not data.get("choices"):
-                return "LLM returned no response."
+                if not data.get("choices"):
+                    return "LLM returned no response."
 
-            choice = data["choices"][0]
-            message = choice.get("message", {})
+                choice = data["choices"][0]
+                message = choice.get("message", {})
 
-            # Check if LLM wants to call tools
-            tool_calls = message.get("tool_calls", [])
+                # Check if LLM wants to call tools
+                tool_calls = message.get("tool_calls", [])
 
-            if not tool_calls:
-                # No tool calls - return the final response
-                return message.get("content", "No response generated.")
+                if not tool_calls:
+                    # No tool calls - return the final response
+                    content = message.get("content", "No response generated.")
+                    if content:
+                        return content
+                    # If no content but also no tool calls, try one more time
+                    if iteration == max_iterations - 1:
+                        return "I was unable to generate a response. Please try again."
+                    continue
 
-            # Add the assistant's message with tool calls to conversation
-            messages.append(message)
+                # Add the assistant's message with tool calls to conversation
+                messages.append(message)
+
+            except httpx.HTTPStatusError as e:
+                print(f"[LLM error] HTTP {e.response.status_code}: {e.response.text[:200]}", file=sys.stderr)
+                return f"LLM error: HTTP {e.response.status_code}. The service may be busy."
+            except Exception as e:
+                print(f"[LLM error] {e}", file=sys.stderr)
+                return f"LLM error: {e}. Please try again."
 
             # Execute each tool call
             for tool_call in tool_calls:
